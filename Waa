@@ -1,0 +1,58 @@
+local dwCamera = workspace.CurrentCamera
+local dwRunService = game:GetService("RunService")
+local dwPlayers = game:GetService("Players")
+local dwLocalPlayer = dwPlayers.LocalPlayer
+local dwMouse = dwLocalPlayer:GetMouse()
+
+local settings = {
+    Aimbot = true,
+    Aiming = false,
+    Aimbot_AimPart = "Head",
+    Aimbot_TeamCheck = true
+}
+
+dwMouse.Button2Down:Connect(function()
+    settings.Aiming = true
+end)
+
+dwMouse.Button2Up:Connect(function()
+    settings.Aiming = false
+end)
+
+dwRunService.RenderStepped:Connect(function()
+    local dist = math.huge
+    local closest_char = nil 
+    
+    if settings.Aiming then 
+        for _, v in next, dwPlayers:GetPlayers() do 
+            if v ~= dwLocalPlayer and
+            v.Character and
+            v.Character:FindFirstChild("HumanoidRootPart") and
+            v.Character:FindFirstChild("Humanoid") and
+            v.Character.Humanoid.Health > 0 then 
+
+                if (settings.Aimbot_TeamCheck == true and v.Team ~= dwLocalPlayer.Team) or 
+                settings.Aimbot_TeamCheck == false then 
+
+                    local char = v.Character
+                    local char_part_pos, is_onscreen = dwCamera:WorldToViewportPoint(char[settings.Aimbot_AimPart].Position)
+
+                    if is_onscreen then 
+                        local mag = (Vector2.new(dwMouse.X, dwMouse.Y) - Vector2.new(char_part_pos.X, char_part_pos.Y)).Magnitude
+                        if mag < dist then 
+                            dist = mag 
+                            closest_char = char 
+                        end
+                    end
+                end 
+            end 
+        end 
+        
+        if closest_char and 
+        closest_char:FindFirstChild("HumanoidRootPart") and 
+        closest_char:FindFirstChild("Humanoid") and
+        closest_char.Humanoid.Health > 0 then 
+            dwCamera.CFrame = CFrame.new(dwCamera.CFrame.Position, closest_char[settings.Aimbot_AimPart].Position)
+        end
+    end
+end)
